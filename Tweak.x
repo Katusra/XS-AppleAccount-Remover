@@ -87,18 +87,6 @@ static void XSRunDiagnostic(void)
             appleType.description ?: @"<nil>"]
     );
 
-    XSWriteLog(
-        [NSString stringWithFormat:
-            @"AccountType accessGranted: %@",
-            appleType.accessGranted ? @"YES" : @"NO"]
-    );
-
-    XSWriteLog(
-        [NSString stringWithFormat:
-            @"AccountType supportsMultipleAccounts: %@",
-            appleType.supportsMultipleAccounts ? @"YES" : @"NO"]
-    );
-
     NSArray *accounts =
         [store accountsWithAccountType:appleType];
 
@@ -126,12 +114,6 @@ static void XSRunDiagnostic(void)
 
         XSWriteLog(
             [NSString stringWithFormat:
-                @"Enabled: %@",
-                account.enabled ? @"YES" : @"NO"]
-        );
-
-        XSWriteLog(
-            [NSString stringWithFormat:
                 @"Account description: %@",
                 account.accountDescription ?: @"<nil>"]
         );
@@ -148,18 +130,6 @@ static void XSRunDiagnostic(void)
                 [NSString stringWithFormat:
                     @"Actual accountType description: %@",
                     account.accountType.description ?: @"<nil>"]
-            );
-
-            XSWriteLog(
-                [NSString stringWithFormat:
-                    @"Actual accountType accessGranted: %@",
-                    account.accountType.accessGranted ? @"YES" : @"NO"]
-            );
-
-            XSWriteLog(
-                [NSString stringWithFormat:
-                    @"Actual accountType supportsMultipleAccounts: %@",
-                    account.accountType.supportsMultipleAccounts ? @"YES" : @"NO"]
             );
         } else {
             XSWriteLog(@"Actual accountType: <nil>");
