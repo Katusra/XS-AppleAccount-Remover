@@ -17,7 +17,6 @@ static void XSWriteLog(NSString *message)
              message];
 
         NSFileManager *fm = [NSFileManager defaultManager];
-
         NSString *dir = [path stringByDeletingLastPathComponent];
 
         if (![fm fileExistsAtPath:dir]) {
@@ -27,47 +26,33 @@ static void XSWriteLog(NSString *message)
                                 error:nil];
         }
 
-        if (![fm fileExistsAtPath:path]) {
+        NSFileHandle *handle =
+            [NSFileHandle fileHandleForWritingAtPath:path];
+
+        if (!handle) {
             [line writeToFile:path
                    atomically:YES
                      encoding:NSUTF8StringEncoding
                         error:nil];
-        } else {
-            NSFileHandle *handle =
-                [NSFileHandle fileHandleForWritingAtPath:path];
-
-            [handle seekToEndOfFile];
-
-            NSData *data =
-                [line dataUsingEncoding:NSUTF8StringEncoding];
-
-            [handle writeData:data];
-            [handle closeFile];
+            return;
         }
+
+        [handle seekToEndOfFile];
+
+        NSData *data =
+            [line dataUsingEncoding:NSUTF8StringEncoding];
+
+        [handle writeData:data];
+        [handle closeFile];
     }
     @catch (NSException *exception) {
-        // 不让日志失败影响 Preferences
     }
 }
 
-static void XSRunDiagnostic(void)
+static void XSRemoveAppleAccount(void)
 {
-    XSWriteLog(@"========== XSAccountRemover diagnostic ==========");
-    XSWriteLog(@"Tweak code started.");
-
-    NSBundle *bundle = [NSBundle mainBundle];
-
-    XSWriteLog(
-        [NSString stringWithFormat:@"Bundle: %@",
-         bundle.bundleIdentifier ?: @"<nil>"]
-    );
-
-    XSWriteLog(
-        [NSString stringWithFormat:@"Process: %@",
-         [[NSProcessInfo processInfo] processName] ?: @"<nil>"]
-    );
-
-    XSWriteLog(@"Creating ACAccountStore...");
+    XSWriteLog(@"========== XSAccountRemover REMOVE TEST ==========");
+    XSWriteLog(@"Remove code started.");
 
     ACAccountStore *store =
         [[ACAccountStore alloc] init];
@@ -77,18 +62,14 @@ static void XSRunDiagnostic(void)
         return;
     }
 
-    XSWriteLog(@"ACAccountStore created.");
-
     ACAccountType *appleType =
         [store accountTypeWithAccountTypeIdentifier:
             @"com.apple.account.AppleAccount"];
 
     if (!appleType) {
-        XSWriteLog(@"Apple Account type NOT found.");
+        XSWriteLog(@"ERROR: Apple Account type not found.");
         return;
     }
-
-    XSWriteLog(@"Apple Account type found.");
 
     NSArray *accounts =
         [store accountsWithAccountType:appleType];
@@ -99,22 +80,73 @@ static void XSRunDiagnostic(void)
             (unsigned long)accounts.count]
     );
 
-    for (ACAccount *account in accounts) {
-
-        XSWriteLog(
-            [NSString stringWithFormat:
-                @"Account username: %@",
-                account.username ?: @"<nil>"]
-        );
-
-        XSWriteLog(
-            [NSString stringWithFormat:
-                @"Account identifier: %@",
-                account.identifier ?: @"<nil>"]
-        );
+    if (accounts.count == 0) {
+        XSWriteLog(@"No Apple Account found.");
+        return;
     }
 
-    XSWriteLog(@"========== diagnostic finished ==========");
+    for (ACAccount *account in accounts) {
+
+        NSString *username =
+            account.username ?: @"<nil>";
+
+        NSString *identifier =
+            account.identifier ?: @"<nil>";
+
+        XSWriteLog(
+            [NSString stringWithFormat:
+                @"TARGET username: %@",
+                username]
+        );
+
+        XSWriteLog(
+            [NSString stringWithFormat:
+                @"TARGET identifier: %@",
+                identifier]
+        );
+
+        XSWriteLog(@"Calling removeAccount...");
+
+        [store removeAccount:account
+        withCompletionHandler:^(BOOL success, NSError *error) {
+
+            if (success) {
+
+                XSWriteLog(
+                    [NSString stringWithFormat:
+                        @"SUCCESS: removed account %@",
+                        username]
+                );
+
+            } else {
+
+                XSWriteLog(@"FAILED: removeAccount returned NO.");
+
+                if (error) {
+
+                    XSWriteLog(
+                        [NSString stringWithFormat:
+                            @"Error domain: %@",
+                            error.domain ?: @"<nil>"]
+                    );
+
+                    XSWriteLog(
+                        [NSString stringWithFormat:
+                            @"Error code: %ld",
+                            (long)error.code]
+                    );
+
+                    XSWriteLog(
+                        [NSString stringWithFormat:
+                            @"Error description: %@",
+                            error.localizedDescription ?: @"<nil>"]
+                    );
+                }
+            }
+
+            XSWriteLog(@"========== REMOVE TEST FINISHED ==========");
+        }];
+    }
 }
 
 %ctor
@@ -126,7 +158,7 @@ static void XSRunDiagnostic(void)
                           (int64_t)(3.0 * NSEC_PER_SEC)),
             dispatch_get_main_queue(),
             ^{
-                XSRunDiagnostic();
+                XSRemoveAppleAccount();
             }
         );
     }
