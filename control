@@ -1,0 +1,9 @@
+Package: com.xs.accountremover
+Name: XS Apple Account Remover
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: Experimental Apple Account removal test for iOS 17.5.1
+Maintainer: XS Rescue
+Author: XS Rescue
+Section: Tweaks
+Depends: firmware (>= 15.0)
