@@ -49,10 +49,10 @@ static void XSWriteLog(NSString *message)
     }
 }
 
-static void XSRemoveAppleAccount(void)
+static void XSRunDiagnostic(void)
 {
-    XSWriteLog(@"========== XSAccountRemover REMOVE TEST ==========");
-    XSWriteLog(@"Remove code started.");
+    XSWriteLog(@"========== XSAccountRemover TYPE DIAGNOSTIC ==========");
+    XSWriteLog(@"Diagnostic code started.");
 
     ACAccountStore *store =
         [[ACAccountStore alloc] init];
@@ -61,6 +61,8 @@ static void XSRemoveAppleAccount(void)
         XSWriteLog(@"ERROR: ACAccountStore creation failed.");
         return;
     }
+
+    XSWriteLog(@"ACAccountStore created.");
 
     ACAccountType *appleType =
         [store accountTypeWithAccountTypeIdentifier:
@@ -71,6 +73,32 @@ static void XSRemoveAppleAccount(void)
         return;
     }
 
+    XSWriteLog(@"Apple Account type found.");
+
+    XSWriteLog(
+        [NSString stringWithFormat:
+            @"AccountType identifier: %@",
+            appleType.identifier ?: @"<nil>"]
+    );
+
+    XSWriteLog(
+        [NSString stringWithFormat:
+            @"AccountType description: %@",
+            appleType.description ?: @"<nil>"]
+    );
+
+    XSWriteLog(
+        [NSString stringWithFormat:
+            @"AccountType accessGranted: %@",
+            appleType.accessGranted ? @"YES" : @"NO"]
+    );
+
+    XSWriteLog(
+        [NSString stringWithFormat:
+            @"AccountType supportsMultipleAccounts: %@",
+            appleType.supportsMultipleAccounts ? @"YES" : @"NO"]
+    );
+
     NSArray *accounts =
         [store accountsWithAccountType:appleType];
 
@@ -80,73 +108,67 @@ static void XSRemoveAppleAccount(void)
             (unsigned long)accounts.count]
     );
 
-    if (accounts.count == 0) {
-        XSWriteLog(@"No Apple Account found.");
-        return;
-    }
-
     for (ACAccount *account in accounts) {
 
-        NSString *username =
-            account.username ?: @"<nil>";
-
-        NSString *identifier =
-            account.identifier ?: @"<nil>";
+        XSWriteLog(@"----- ACCOUNT BEGIN -----");
 
         XSWriteLog(
             [NSString stringWithFormat:
-                @"TARGET username: %@",
-                username]
+                @"Username: %@",
+                account.username ?: @"<nil>"]
         );
 
         XSWriteLog(
             [NSString stringWithFormat:
-                @"TARGET identifier: %@",
-                identifier]
+                @"Identifier: %@",
+                account.identifier ?: @"<nil>"]
         );
 
-        XSWriteLog(@"Calling removeAccount...");
+        XSWriteLog(
+            [NSString stringWithFormat:
+                @"Enabled: %@",
+                account.enabled ? @"YES" : @"NO"]
+        );
 
-        [store removeAccount:account
-        withCompletionHandler:^(BOOL success, NSError *error) {
+        XSWriteLog(
+            [NSString stringWithFormat:
+                @"Account description: %@",
+                account.accountDescription ?: @"<nil>"]
+        );
 
-            if (success) {
+        if (account.accountType) {
 
-                XSWriteLog(
-                    [NSString stringWithFormat:
-                        @"SUCCESS: removed account %@",
-                        username]
-                );
+            XSWriteLog(
+                [NSString stringWithFormat:
+                    @"Actual accountType identifier: %@",
+                    account.accountType.identifier ?: @"<nil>"]
+            );
 
-            } else {
+            XSWriteLog(
+                [NSString stringWithFormat:
+                    @"Actual accountType description: %@",
+                    account.accountType.description ?: @"<nil>"]
+            );
 
-                XSWriteLog(@"FAILED: removeAccount returned NO.");
+            XSWriteLog(
+                [NSString stringWithFormat:
+                    @"Actual accountType accessGranted: %@",
+                    account.accountType.accessGranted ? @"YES" : @"NO"]
+            );
 
-                if (error) {
+            XSWriteLog(
+                [NSString stringWithFormat:
+                    @"Actual accountType supportsMultipleAccounts: %@",
+                    account.accountType.supportsMultipleAccounts ? @"YES" : @"NO"]
+            );
+        } else {
+            XSWriteLog(@"Actual accountType: <nil>");
+        }
 
-                    XSWriteLog(
-                        [NSString stringWithFormat:
-                            @"Error domain: %@",
-                            error.domain ?: @"<nil>"]
-                    );
-
-                    XSWriteLog(
-                        [NSString stringWithFormat:
-                            @"Error code: %ld",
-                            (long)error.code]
-                    );
-
-                    XSWriteLog(
-                        [NSString stringWithFormat:
-                            @"Error description: %@",
-                            error.localizedDescription ?: @"<nil>"]
-                    );
-                }
-            }
-
-            XSWriteLog(@"========== REMOVE TEST FINISHED ==========");
-        }];
+        XSWriteLog(@"----- ACCOUNT END -----");
     }
+
+    XSWriteLog(@"========== TYPE DIAGNOSTIC FINISHED ==========");
 }
 
 %ctor
@@ -158,8 +180,7 @@ static void XSRemoveAppleAccount(void)
                           (int64_t)(3.0 * NSEC_PER_SEC)),
             dispatch_get_main_queue(),
             ^{
-                XSRemoveAppleAccount();
-            }
-        );
+                XSRunDiagnostic();
+            });
     }
 }
